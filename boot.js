@@ -6,6 +6,7 @@
 //   programa de la caja dentro de la página (tpv/web.py).
 import { loadPyodide } from './pyodide/pyodide.mjs';
 import * as copias from './copias.js';
+import * as tablet from './tablet.js';
 
 // Paquetes de Pyodide que necesita la caja (sus dependencias se cargan solas).
 // pycryptodome: scrypt para la contraseña (el hashlib de Pyodide no lo trae).
@@ -98,45 +99,9 @@ export const caja = {
   },
 };
 
-// --- Botón «Instalar CP BAR» ---------------------------------------------------
-// Chrome avisa (beforeinstallprompt) cuando la app se puede instalar como aplicación:
-// entonces aparece un botón; al pulsarlo sale el diálogo de instalación de Android y
-// la caja queda en el cajón de aplicaciones con su icono.
-let installEvent = null;
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  installEvent = e;
-  showInstallButton();
-});
-window.addEventListener('appinstalled', () => {
-  installEvent = null;
-  document.getElementById('install-app')?.remove();
-});
-
-function showInstallButton() {
-  if (document.getElementById('install-app') || !installEvent) return;
-  const btn = document.createElement('button');
-  btn.id = 'install-app';
-  btn.type = 'button';
-  btn.textContent = '⬇ Instalar CP BAR como aplicación';
-  btn.style.cssText = 'position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:90;padding:16px 24px;'
-    + 'font:700 19px system-ui,sans-serif;color:#15171C;background:#F2C14E;border:0;border-radius:14px;'
-    + 'box-shadow:0 6px 24px rgba(0,0,0,.5);cursor:pointer';
-  btn.addEventListener('click', async () => {
-    if (!installEvent) return;
-    installEvent.prompt();
-    await installEvent.userChoice.catch(() => null);
-    installEvent = null;
-    btn.remove();
-  });
-  document.body.append(btn);
-}
-
 async function start() {
-  if ('serviceWorker' in navigator) {
-    // updateViaCache 'none': el navegador comprueba siempre si hay un sw.js nuevo (versión nueva de la app).
-    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch((err) => console.warn('Service worker', err));
-  }
+  // Si hay una versión nueva ya descargada, se pone ahora, antes de arrancar la caja.
+  if (await tablet.initUpdates()) { say('Actualizando CP BAR…'); return; }
   // Pide al navegador que no borre los datos de la caja si le falta espacio.
   if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
 
@@ -154,10 +119,11 @@ async function start() {
   web.start(DATA);
   await persist();
   installApi();
-  window.cpbarPwa = { backupPanel: copias.backupPanel };
+  window.cpbarPwa = { backupPanel: copias.backupPanel, appPanel: tablet.appPanel };
   copias.init(caja);
   if (bootBox) bootBox.remove();
   await import('./js/app.js');
+  tablet.ready();
 }
 
 start().catch(bootError);

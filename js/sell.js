@@ -37,7 +37,7 @@ export async function render(main, ctx) {
   els.charge = h('button', { class: 'btn success charge', id: 'btn-cobrar', onclick: openCharge }, 'COBRAR');
   els.title = h('h2', { class: 'cart-title' });
   els.tabBar = h('div', { class: 'tab-bar hidden' });
-  els.tabsBtn = h('button', { class: 'btn primary tabs-btn', id: 'btn-cuentas', onclick: openTabsList }, 'Cuentas abiertas');
+  els.tabsBtn = h('button', { class: 'btn tabs-btn', id: 'btn-cuentas', onclick: openTabsList }, 'Cuentas abiertas');
   const aside = h('aside', { class: 'cart', 'aria-label': 'Cuenta actual' },
     h('div', { class: 'row between' }, els.title, els.count),
     els.tabBar,
@@ -124,6 +124,8 @@ function cartChanged() {
 }
 
 function addLine(line) {
+  // Respuesta al dedo en la tablet: una vibración muy corta (si el aparato la tiene).
+  try { if (navigator.vibrate) navigator.vibrate(12); } catch { /* sin vibración */ }
   const existing = st.cart.find((l) => l.key === line.key && l.unit_price_cents === line.unit_price_cents);
   if (existing) existing.qty += 1;
   else st.cart.push({ ...line, qty: 1 });
@@ -185,15 +187,20 @@ function renderCart() {
       h('button', { class: 'btn ghost small-btn', onclick: renameTab }, 'Cambiar nombre'),
       h('button', { class: 'btn primary small-btn', id: 'btn-dejar-abierta', onclick: leaveTabOpen }, 'Dejar abierta'));
   }
-  els.tabsBtn.textContent = st.openTabs ? `Cuentas abiertas (${st.openTabs})` : 'Cuentas abiertas';
+  drawTabsBtn();
   if (!st.cart.length) els.cartLines.append(h('p', { class: 'empty' }, st.tab ? `Pulsa un producto para apuntárselo a ${st.tab.name}.` : 'Pulsa un producto para añadirlo.'));
   for (const l of st.cart) {
-    els.cartLines.append(h('div', { class: 'line' },
-      h('div', { class: 'line-name' }, h('div', { class: 'strong' }, l.name), h('div', { class: 'muted small' }, `${eur(l.unit_price_cents)} / ud`)),
-      h('button', { class: 'qty-btn', 'aria-label': `Quitar uno de ${l.name}`, onclick: () => changeQty(l, -1) }, '−'),
-      h('span', { class: 'qty' }, String(l.qty)),
-      h('button', { class: 'qty-btn', 'aria-label': `Añadir uno de ${l.name}`, onclick: () => changeQty(l, 1) }, '+'),
-      h('span', { class: 'line-total' }, eur(l.unit_price_cents * l.qty)),
+    // Dos filas: nombre e importe arriba; precio por unidad y − cantidad + abajo (cabe bien en tablet).
+    els.cartLines.append(h('div', { class: 'line', style: l.color ? `--cat:${l.color}` : null },
+      h('div', { class: 'line-top' },
+        h('span', { class: 'line-name strong' }, l.name),
+        h('span', { class: 'line-total' }, eur(l.unit_price_cents * l.qty))),
+      h('div', { class: 'line-bottom' },
+        h('span', { class: 'muted small' }, `${eur(l.unit_price_cents)} / ud`),
+        h('div', { class: 'qty-group' },
+          h('button', { class: 'qty-btn', 'aria-label': `Quitar uno de ${l.name}`, onclick: () => changeQty(l, -1) }, '−'),
+          h('span', { class: 'qty' }, String(l.qty)),
+          h('button', { class: 'qty-btn', 'aria-label': `Añadir uno de ${l.name}`, onclick: () => changeQty(l, 1) }, '+'))),
     ));
   }
   const total = eur(cartTotal());
@@ -246,8 +253,13 @@ async function reloadTab() {
 async function refreshTabsCount() {
   try {
     st.openTabs = (await get('/api/tabs')).length;
-    els.tabsBtn.textContent = st.openTabs ? `Cuentas abiertas (${st.openTabs})` : 'Cuentas abiertas';
+    drawTabsBtn();
   } catch { /* sin conexión: se reintenta en el siguiente ciclo */ }
+}
+
+function drawTabsBtn() {
+  clear(els.tabsBtn).append('Cuentas abiertas');
+  if (st.openTabs) els.tabsBtn.append(h('span', { class: 'count' }, String(st.openTabs)));
 }
 
 /** Guarda la cuenta abierta. Los guardados van en fila para no pisarse entre sí. */

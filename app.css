@@ -56,6 +56,10 @@
 
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; }
+/* Tablet: sin «tirar para recargar», sin zoom por doble toque y sin menús al mantener pulsado un botón. */
+html { overscroll-behavior: none; touch-action: manipulation; }
+body { overscroll-behavior: none; }
+button { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 body {
   background: var(--bg);
   color: var(--text);
@@ -89,10 +93,11 @@ button:disabled { cursor: not-allowed; }
 .danger-text { color: var(--danger-text) !important; }
 
 /* Estructura */
-.layout { display: flex; min-height: 100vh; }
+.layout { display: flex; height: 100vh; height: 100dvh; }
 .side {
   width: 216px; flex-shrink: 0; background: var(--side); display: flex; flex-direction: column;
-  padding: 22px 14px 18px; gap: 6px; position: sticky; top: 0; height: 100vh; border-right: 1px solid var(--line);
+  padding: 22px 14px 18px; gap: 6px; position: sticky; top: 0; height: 100vh; height: 100dvh; border-right: 1px solid var(--line);
+  padding-left: max(14px, env(safe-area-inset-left));
 }
 .brand { display: flex; align-items: center; gap: 10px; font-size: 24px; font-weight: 800; padding: 0 8px 18px; letter-spacing: .3px; }
 .brand-mark {
@@ -116,8 +121,15 @@ button:disabled { cursor: not-allowed; }
   display: inline-flex; align-items: center; justify-content: center; color: var(--text);
 }
 .theme-btn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.content { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.main { flex: 1; padding: 20px 24px; min-width: 0; }
+.content { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+.main { flex: 1; padding: 20px 24px; min-width: 0; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+
+/* Barra de la app de la tablet: instalar / versión nueva */
+.pwa-bar { display: flex; align-items: center; gap: 12px; padding: 10px 24px; background: var(--panel); border-bottom: 1px solid var(--line); font-size: 15px; }
+.pwa-bar-update { background: var(--success-soft); }
+.pwa-bar-icon { width: 34px; height: 34px; border-radius: 10px; background: var(--accent); color: var(--accent-ink); display: inline-flex; align-items: center; justify-content: center; font-weight: 900; flex-shrink: 0; }
+.pwa-bar-update .pwa-bar-icon { background: var(--success); color: #fff; }
+.steps-list { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 10px; font-size: 18px; }
 
 /* Avisos superiores */
 .banner { padding: 10px 24px; font-size: 15px; }
@@ -180,26 +192,33 @@ input[type="date"] { width: auto; }
 .swatch.on { box-shadow: 0 0 0 3px var(--panel), 0 0 0 6px var(--text); }
 
 /* Venta */
-.sell { display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 20px; height: calc(100vh - 40px); }
-.content:has(.banner) .sell { height: calc(100vh - 80px); }
-.products { display: flex; flex-direction: column; gap: 16px; min-width: 0; overflow: hidden; }
-.tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+/* La pantalla de venta ocupa exactamente el alto disponible; solo se desplazan productos y cuenta. */
+.main:has(.sell) { overflow: hidden; display: flex; flex-direction: column; padding-bottom: 16px; }
+.sell { display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 20px; flex: 1; min-height: 0; }
+.products { display: flex; flex-direction: column; gap: 14px; min-width: 0; min-height: 0; overflow: hidden; }
+/* Secciones en una sola fila que se desliza con el dedo. */
+.tabs { display: flex; gap: 8px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding: 2px 2px 4px; flex-shrink: 0;
+  -webkit-mask-image: linear-gradient(90deg, #000 92%, transparent); mask-image: linear-gradient(90deg, #000 92%, transparent); }
+.tabs::-webkit-scrollbar { display: none; }
 .tab {
-  min-height: 52px; padding: 0 20px; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--panel);
-  color: var(--text); font-size: 18px; font-weight: 700; display: inline-flex; align-items: center; gap: 10px;
+  min-height: 54px; padding: 0 22px; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--panel);
+  color: var(--text); font-size: 18px; font-weight: 700; display: inline-flex; align-items: center; gap: 10px; flex-shrink: 0; white-space: nowrap;
 }
+.tab:last-child { margin-right: 40px; }
 .tab::before { content: ""; width: 12px; height: 12px; border-radius: 50%; background: var(--cat); }
 .tab.on { background: var(--cat); border-color: transparent; color: #fff; }
 .tab.on::before { background: rgba(255, 255, 255, .85); }
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; overflow-y: auto; align-content: start; padding: 2px 2px 14px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; overflow-y: auto; align-content: start; padding: 2px 2px 14px; overscroll-behavior: contain; min-height: 0; }
 .tile {
   position: relative; min-height: 120px; border-radius: 18px; border: 0; padding: 16px; background: var(--cat); color: #fff;
   display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; text-align: left;
   box-shadow: 0 2px 0 rgba(0, 0, 0, .12), var(--shadow); transition: transform .06s ease, filter .12s ease;
 }
 .tile:hover:not(:disabled) { filter: brightness(1.08); }
-.tile:active:not(:disabled) { transform: scale(.97); }
-.tile-name { font-size: 19px; font-weight: 700; line-height: 1.2; }
+.tile:active:not(:disabled) { transform: scale(.96); filter: brightness(.92); }
+.tile.pop { animation: tile-pop .18s ease; }
+@keyframes tile-pop { 50% { transform: scale(.95); } }
+.tile-name { font-size: 19px; font-weight: 700; line-height: 1.2; padding-right: 30px; overflow-wrap: anywhere; }
 .tile-price { font-size: 24px; font-weight: 800; letter-spacing: -.3px; }
 .tile-foot { display: flex; justify-content: space-between; align-items: flex-end; width: 100%; gap: 6px; }
 .tile-count {
@@ -209,15 +228,17 @@ input[type="date"] { width: auto; }
 
 .cart { background: var(--panel); border-radius: 20px; padding: 18px; display: flex; flex-direction: column; gap: 12px; min-height: 0; box-shadow: var(--shadow); border: 1px solid var(--line); }
 .cart-lines { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; min-height: 80px; }
-.line { display: flex; align-items: center; gap: 10px; background: var(--panel-2); border-radius: 14px; padding: 8px 10px; }
-.line-name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
-.qty-btn { width: 46px; height: 46px; border-radius: 12px; border: 0; background: var(--panel); color: var(--text); font-size: 26px; font-weight: 700; flex-shrink: 0; box-shadow: var(--shadow); }
+.line { display: flex; flex-direction: column; gap: 6px; background: var(--panel-2); border-radius: 14px; padding: 10px 12px 10px 14px; border-left: 5px solid var(--cat, var(--line-strong)); flex-shrink: 0; }
+.line-top, .line-bottom { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.line-name { min-width: 0; overflow-wrap: anywhere; font-size: 17px; line-height: 1.25; }
+.line-total { text-align: right; font-size: 19px; font-weight: 800; white-space: nowrap; }
+.qty-group { display: flex; align-items: center; gap: 6px; }
+.qty-btn { width: 46px; height: 42px; border-radius: 12px; border: 0; background: var(--panel); color: var(--text); font-size: 26px; font-weight: 700; flex-shrink: 0; box-shadow: var(--shadow); line-height: 1; }
 .qty-btn:active { transform: scale(.95); }
-.qty { width: 28px; text-align: center; font-size: 20px; font-weight: 800; }
-.line-total { width: 92px; text-align: right; font-size: 18px; font-weight: 750; }
+.qty { min-width: 30px; text-align: center; font-size: 20px; font-weight: 800; }
 /* Cuentas abiertas a nombre */
-.tabs-btn { min-height: 54px; font-size: 18px; }
-.tabs-btn .count { background: var(--accent-ink); color: var(--accent); border-radius: 999px; padding: 1px 9px; font-size: 15px; }
+.tabs-btn { min-height: 54px; font-size: 18px; background: var(--accent-soft); color: var(--accent-text); border: 1px solid var(--accent); }
+.tabs-btn .count { background: var(--accent); color: var(--accent-ink); border-radius: 999px; padding: 1px 10px; font-size: 15px; font-weight: 800; }
 .tab-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; background: var(--accent-soft); border: 1px solid var(--accent); border-radius: 14px; padding: 8px 10px; }
 body.on-tab .cart { box-shadow: 0 0 0 3px var(--accent), var(--shadow); }
 .cart-title { overflow-wrap: anywhere; }
@@ -263,7 +284,7 @@ body.on-tab .cart-title { color: var(--accent-text); }
 
 /* Ventanas */
 .backdrop { position: fixed; inset: 0; background: var(--overlay); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 50; backdrop-filter: blur(2px); }
-.modal { background: var(--panel); border-radius: 22px; padding: 28px 30px; width: min(560px, 100%); max-height: calc(100vh - 32px); overflow-y: auto; box-shadow: var(--shadow-lg); }
+.modal { background: var(--panel); border-radius: 22px; padding: 28px 30px; width: min(560px, 100%); max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); overflow-y: auto; overscroll-behavior: contain; box-shadow: var(--shadow-lg); }
 .modal-wide { width: min(1000px, 100%); }
 .login { width: 100%; }
 .login-head { display: flex; align-items: center; gap: 14px; }
@@ -322,10 +343,26 @@ body.on-tab .cart-title { color: var(--accent-text); }
 .danger-panel { border: 1px solid var(--danger); }
 .section-title { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 8px; }
 
+/* Tablet en horizontal (p. ej. Samsung Tab 1280×800): menú más estrecho y más sitio para los productos. */
+@media (min-width: 901px) and (max-width: 1400px) {
+  .side { width: 188px; padding: 18px 10px 14px; }
+  .brand { font-size: 21px; padding-bottom: 14px; }
+  .nav-item { height: 52px; font-size: 16px; padding: 0 12px; gap: 10px; }
+  .clock { font-size: 28px; }
+  .main { padding: 16px 18px; }
+  .sell { grid-template-columns: minmax(0, 1fr) 380px; gap: 16px; }
+  .grid { grid-template-columns: repeat(auto-fill, minmax(165px, 1fr)); }
+  .total-amount { font-size: 46px; }
+  .charge { min-height: 78px; font-size: 32px; }
+}
+
 /* Tablet en vertical y móvil: productos a pantalla completa, cuenta como barra inferior */
 @media (max-width: 900px) {
   .toasts { top: auto; bottom: 86px; right: 16px; }
-  .layout { flex-direction: column; }
+  .layout { flex-direction: column; height: auto; min-height: 100dvh; }
+  .content { min-height: 0; }
+  .main { overflow: visible; }
+  .main:has(.sell) { overflow: visible; }
   .side { width: 100%; height: auto; position: static; flex-direction: row; flex-wrap: wrap; align-items: center; padding: 10px 12px; border-right: 0; border-bottom: 1px solid var(--line); }
   .brand { padding: 0 8px; font-size: 20px; }
   .brand-mark { width: 34px; height: 34px; font-size: 14px; }
@@ -347,9 +384,11 @@ body.on-tab .cart-title { color: var(--accent-text); }
 
 /* Tablet en vertical: productos arriba y la cuenta siempre a la vista abajo (sin barra «Ver cuenta»). */
 @media (min-width: 600px) and (max-width: 900px) {
-  .main { padding: 12px 16px 16px; }
-  .sell { grid-template-rows: minmax(0, 1fr) auto; height: calc(100vh - 140px); }
-  .content:has(.banner) .sell { height: calc(100vh - 200px); }
+  .layout { height: 100vh; height: 100dvh; min-height: 0; }
+  .content { flex: 1; }
+  .main { padding: 12px 16px 16px; overflow-y: auto; }
+  .main:has(.sell) { overflow: hidden; }
+  .sell { grid-template-rows: minmax(0, 1fr) auto; height: auto; flex: 1; min-height: 0; }
   .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); overflow-y: auto; }
   .cart { display: flex; position: static; max-height: 46vh; border-radius: 20px; }
   .cart-lines { min-height: 60px; }

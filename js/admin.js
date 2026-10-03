@@ -262,6 +262,6 @@ async function settingsTab(reload) {
     h('div', { class: 'panel stack' }, h('h2', {}, 'Contraseña'),
       h('p', { class: 'muted' }, 'Solo se pide para entrar aquí (productos, precios y ajustes). Vender, cobrar, anular y cerrar el turno no la piden.'),
       h('button', { class: 'btn ghost', onclick: pass }, 'Cambiar contraseña')),
-    h('div', { class: 'panel stack' }, h('h2', {}, 'Información'),
+    pwa && pwa.appPanel ? pwa.appPanel(reload) : h('div', { class: 'panel stack' }, h('h2', {}, 'Información'),
       h('p', { class: 'muted small' }, `CP BAR · Caja · versión ${state.version}`)));
 }

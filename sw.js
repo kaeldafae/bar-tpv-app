@@ -1,6 +1,10 @@
 // Service worker de la app de la tablet: guarda todos los archivos de la app para que
 // funcione sin internet. build.py rellena VERSION y FILES.
-const VERSION = "4594442ec131";
+//
+// Actualizaciones: una versión nueva se descarga entera en segundo plano y queda
+// «esperando». La página decide cuándo aplicarla (al instante si la caja está libre,
+// o cuando el camarero pulse «Actualizar»), para no reiniciar en mitad de un cobro.
+const VERSION = "d24505e419ae";
 const FILES = [
 "./",
 "./app-python.zip",
@@ -40,7 +44,8 @@ const FILES = [
 "./pyodide/sniffio-1.3.1-py3-none-any.whl",
 "./pyodide/starlette-1.0.0-py3-none-any.whl",
 "./pyodide/typing_extensions-4.15.0-py3-none-any.whl",
-"./pyodide/typing_inspection-0.4.2-py3-none-any.whl"
+"./pyodide/typing_inspection-0.4.2-py3-none-any.whl",
+"./tablet.js"
 ];
 const CACHE = `cpbar-${VERSION}`;
 
@@ -48,8 +53,12 @@ self.addEventListener('install', (event) => {
   // cache: 'reload' = descargar de verdad, sin usar la caché HTTP del navegador (GitHub Pages
   // la guarda 10 minutos): si no, una versión nueva podía quedarse con archivos viejos.
   event.waitUntil(caches.open(CACHE)
-    .then((cache) => cache.addAll(FILES.map((f) => new Request(f, { cache: 'reload' }))))
-    .then(() => self.skipWaiting()));
+    .then((cache) => cache.addAll(FILES.map((f) => new Request(f, { cache: 'reload' })))));
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data === 'actualizar') self.skipWaiting();
+  if (event.data === 'version' && event.source) event.source.postMessage({ version: VERSION });
 });
 
 self.addEventListener('activate', (event) => {
