@@ -7,12 +7,29 @@ import * as closeShift from './close.js';
 import * as reports from './reports.js';
 import * as adminView from './admin.js';
 
+// Solo Admin (productos y precios) pide contraseña.
 const VIEWS = {
   vender: { label: 'Vender', icon: 'M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z M3 6h18 M16 10a4 4 0 0 1-8 0', mod: sell, admin: false },
-  cerrar: { label: 'Cerrar turno', icon: 'M12 2v10 M18.4 6.6a9 9 0 1 1-12.8 0', mod: closeShift, admin: true },
-  informes: { label: 'Informes', icon: 'M4 20V10 M10 20V4 M16 20v-7 M22 20H2', mod: reports, admin: true },
-  admin: { label: 'Admin', icon: 'M5 11h14v10H5z M8 11V7a4 4 0 0 1 8 0v4 M12 15v2', mod: adminView, admin: true },
+  cerrar: { label: 'Cerrar turno', icon: 'M12 2v10 M18.4 6.6a9 9 0 1 1-12.8 0', mod: closeShift, admin: false },
+  informes: { label: 'Informes', icon: 'M4 20V10 M10 20V4 M16 20v-7 M22 20H2', mod: reports, admin: false },
+  admin: { label: 'Productos', icon: 'M4 6h16 M4 12h16 M4 18h10', mod: adminView, admin: true },
 };
+const LOCK_ICON = 'M5 11h14v10H5z M8 11V7a4 4 0 0 1 8 0v4';
+const SUN = 'M12 4V2 M12 22v-2 M4 12H2 M22 12h-2 M5.6 5.6 4.2 4.2 M19.8 19.8l-1.4-1.4 M5.6 18.4l-1.4 1.4 M19.8 4.2l-1.4 1.4 M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10z';
+const MOON = 'M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z';
+
+// --- Tema claro / oscuro ----------------------------------------------------------
+function applyTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+  try { localStorage.setItem('cpbar.tema', theme); } catch { /* sin almacenamiento */ }
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', theme === 'dark' ? '#121418' : '#F4F2EE');
+  const btn = document.getElementById('theme-btn');
+  if (btn) {
+    clear(btn).append(icon(theme === 'dark' ? SUN : MOON));
+    btn.title = theme === 'dark' ? 'Tema claro' : 'Tema oscuro';
+  }
+}
 
 export const ctx = {
   state: null,
@@ -68,7 +85,7 @@ function loginPrompt() {
         }
       },
     },
-      h('div', { class: 'login-head' }, icon(VIEWS.admin.icon), h('div', {}, h('div', { class: 'brand-small' }, 'CP BAR'), h('h2', {}, 'Administración'))),
+      h('div', { class: 'login-head' }, icon(LOCK_ICON), h('div', {}, h('div', { class: 'brand-small' }, 'CP BAR'), h('h2', {}, 'Productos y precios'))),
       h('label', { for: 'admin-pass' }, 'Contraseña'),
       input,
       error,
@@ -113,11 +130,13 @@ function renderChrome() {
   const s = ctx.state;
   const nav = clear(document.getElementById('nav'));
   for (const [key, v] of Object.entries(VIEWS)) {
+    const lock = v.admin ? icon(LOCK_ICON) : null;
+    if (lock) { lock.classList.add('lock'); lock.setAttribute('width', '16'); lock.setAttribute('height', '16'); }
     nav.append(h('button', {
       class: `nav-item${ctx.view === key ? ' active' : ''}`,
       'aria-current': ctx.view === key ? 'page' : null,
       onclick: () => go(key),
-    }, icon(v.icon), h('span', {}, v.label)));
+    }, icon(v.icon), h('span', {}, v.label), lock));
   }
   const info = clear(document.getElementById('shift-info'));
   if (s && s.shift) {
@@ -131,8 +150,8 @@ function renderChrome() {
   if (s && s.is_admin) {
     adminBox.append(h('button', {
       class: 'btn ghost small-btn',
-      onclick: async () => { await post('/api/admin/logout'); await ctx.refreshState(); if (VIEWS[ctx.view].admin) go('vender'); toast('Has salido de administración.'); },
-    }, 'Salir de admin'));
+      onclick: async () => { await post('/api/admin/logout'); await ctx.refreshState(); if (VIEWS[ctx.view].admin) go('vender'); toast('Productos bloqueados con contraseña.'); },
+    }, 'Bloquear productos'));
   }
   renderBanners();
 }
@@ -143,13 +162,13 @@ function renderBanners() {
   if (!s) return;
   if (s.demo_data) {
     box.append(h('div', { class: 'banner banner-demo' },
-      h('strong', {}, 'MODO PRÁCTICA · datos de EJEMPLO con precios ficticios. '),
-      'Cambia productos y precios en Admin. Cuando estés listo: Admin → Ajustes → «Empezar en real».'));
+      h('strong', {}, 'Modo práctica · productos y precios de ejemplo. '),
+      'Pon los tuyos en Productos. Cuando estés listo: Productos → Ajustes → «Empezar en real».'));
   }
   if (s.last_sale_at && Date.now() < new Date(s.last_sale_at).getTime() - 5 * 60 * 1000) {
     box.append(h('div', { class: 'banner banner-error' },
-      h('strong', {}, 'La hora del ordenador está atrasada. '),
-      'Es anterior a la última venta guardada. Corrige la fecha y hora de Windows antes de seguir vendiendo.'));
+      h('strong', {}, 'La hora del aparato está atrasada. '),
+      'Es anterior a la última venta guardada. Corrige la fecha y hora antes de seguir vendiendo.'));
   }
 }
 
@@ -179,7 +198,7 @@ function setupScreen() {
     },
   },
     h('h1', {}, 'Bienvenido a CP BAR'),
-    h('p', { class: 'big-text' }, 'Primer arranque: crea la contraseña de administración. Se pedirá para cambiar precios, productos, inventario, anular ventas, cerrar el turno y ver informes.'),
+    h('p', { class: 'big-text' }, 'Primer arranque: crea una contraseña. Solo se pedirá para cambiar productos y precios; vender, cobrar y cerrar el turno no la piden.'),
     h('label', { for: 'p1' }, 'Contraseña (mínimo 8 caracteres)'), p1,
     h('label', { for: 'p2' }, 'Repite la contraseña'), p2,
     error,
@@ -261,6 +280,10 @@ window.addEventListener('unhandledrejection', (e) => {
   else errorToast(e.reason || 'Error inesperado');
 });
 
+applyTheme(document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light');
+document.getElementById('theme-btn')?.addEventListener('click', () => {
+  applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
+});
 tickClock();
 setInterval(tickClock, 10_000);
 setInterval(poll, 30_000);

@@ -1,4 +1,4 @@
-// Utilidades sin dependencias: DOM, dinero, cantidades, fechas e identificadores.
+// Utilidades sin dependencias: DOM, dinero, fechas e identificadores.
 
 /** Crea un elemento. attrs: on* = evento, class, style (texto), resto = atributo/propiedad. */
 export function h(tag, attrs = {}, ...children) {
@@ -62,39 +62,6 @@ export function centsToInput(cents) {
   return `${Math.floor(cents / 100)},${String(cents % 100).padStart(2, '0')}`;
 }
 
-// Unidades del inventario. Internamente: ml, ud, racion (enteros).
-export const UNITS = {
-  ml: { label: 'cl', decimals: 1, toBase: 10, long: 'centilitros (cl)' },
-  ud: { label: 'ud', decimals: 0, toBase: 1, long: 'unidades' },
-  racion: { label: 'raciones', decimals: 0, toBase: 1, long: 'raciones' },
-};
-
-/** Cantidad en unidad base -> texto en unidad visible: 50 ml -> "5 cl". */
-export function qtyText(qty, unit) {
-  const u = UNITS[unit];
-  if (unit === 'ml') {
-    const cl = qty / 10;
-    return `${cl.toLocaleString('es-ES', { maximumFractionDigits: 1 })} cl`;
-  }
-  return `${qty} ${u.label}`;
-}
-
-/** Texto en unidad visible -> unidad base. "4,5" cl -> 45 ml. */
-export function parseQty(text, unit) {
-  const u = UNITS[unit];
-  return parseScaled(text, u.decimals);
-}
-
-export function qtyToInput(qty, unit) {
-  if (unit === 'ml') return (qty / 10).toLocaleString('es-ES', { maximumFractionDigits: 1, useGrouping: false });
-  return String(qty);
-}
-
-export function packagesText(qty, size) {
-  const n = qty / size;
-  return n.toLocaleString('es-ES', { maximumFractionDigits: 2 });
-}
-
 /** UUID v4 con crypto.getRandomValues (funciona también fuera de HTTPS, para la fase 2). */
 export function uuid4() {
   const b = crypto.getRandomValues(new Uint8Array(16));
@@ -125,8 +92,4 @@ export function localISODate(date = new Date()) {
   const m = String(date.getMonth() + 1).padStart(2, '0');
   const d = String(date.getDate()).padStart(2, '0');
   return `${y}-${m}-${d}`;
-}
-
-export function pct(value) {
-  return value === null || value === undefined ? '—' : `${value.toLocaleString('es-ES', { maximumFractionDigits: 1 })} %`;
 }

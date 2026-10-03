@@ -97,20 +97,20 @@ function renderGrid() {
   clear(els.grid);
   const products = st.catalog.products.filter((p) => p.category_id === st.activeCat);
   if (!products.length) {
-    els.grid.append(h('p', { class: 'empty' }, st.catalog.categories.length ? 'No hay productos en esta sección. Añádelos en Admin → Productos.' : 'Todavía no hay productos. Créalos en Admin → Productos.'));
+    els.grid.append(h('p', { class: 'empty' }, st.catalog.categories.length ? 'No hay productos en esta sección. Añádelos en Productos.' : 'Todavía no hay productos. Créalos en Productos.'));
     return;
   }
+  // Cuántos de cada producto hay ya en la cuenta: se ve en la esquina del botón.
+  const inCart = {};
+  for (const l of st.cart) inCart[l.product_id] = (inCart[l.product_id] || 0) + l.qty;
   for (const p of products) {
-    const out = p.status === 'agotado';
     els.grid.append(h('button', {
-      class: `tile${out ? ' out' : ''}`, style: `--cat:${catColor(p.category_id)}`, disabled: out,
-      title: out ? 'Agotado: registra una compra o un recuento en Admin → Inventario' : '',
-      onclick: () => addProduct(p),
+      class: 'tile', style: `--cat:${catColor(p.category_id)}`, onclick: () => addProduct(p),
     },
+      inCart[p.id] ? h('span', { class: 'tile-count', 'aria-label': `${inCart[p.id]} en la cuenta` }, String(inCart[p.id])) : null,
       h('span', { class: 'tile-name' }, p.name),
       h('span', { class: 'tile-foot' },
-        h('span', { class: 'tile-price' }, p.kind === 'combinado' ? `desde ${eur(p.price_cents)}` : eur(p.price_cents)),
-        out ? h('span', { class: 'badge badge-out' }, 'AGOTADO') : p.status === 'bajo' ? h('span', { class: 'badge badge-low' }, 'Quedan pocos') : null),
+        h('span', { class: 'tile-price' }, p.kind === 'combinado' ? `desde ${eur(p.price_cents)}` : eur(p.price_cents))),
     ));
   }
 }
@@ -200,6 +200,7 @@ function renderCart() {
   els.total.textContent = total;
   els.mobileTotal.textContent = st.tab ? `${st.tab.name} · ${total}` : total;
   els.charge.disabled = !st.cart.length;
+  if (st.catalog) renderGrid(); // contadores de los botones de producto
 }
 
 // --- Cuentas abiertas a nombre -------------------------------------------------
@@ -267,8 +268,8 @@ function saveTab() {
         return errorToast(new Error('No se ha podido guardar la cuenta. Se guardará al hacer el siguiente cambio.'));
       }
       errorToast(err);
-      // El servidor manda: se vuelve a lo que tiene guardado (otra pantalla, agotado, precio...).
-      if (err instanceof ApiError && ['price_changed', 'out_of_stock'].includes(err.code)) loadCatalog().catch(() => {});
+      // El servidor manda: se vuelve a lo que tiene guardado (otra pantalla, precio cambiado...).
+      if (err instanceof ApiError && err.code === 'price_changed') loadCatalog().catch(() => {});
       if (st.tab && st.tab.id === tab.id) await reloadTab().catch(() => {});
     }
   };
@@ -357,7 +358,7 @@ async function createTab(carry) {
       if (ok) return openTab(await get(`/api/tabs/${err.details.id}`), carry);
       return;
     }
-    if (err instanceof ApiError && ['price_changed', 'out_of_stock'].includes(err.code)) loadCatalog().catch(() => {});
+    if (err instanceof ApiError && err.code === 'price_changed') loadCatalog().catch(() => {});
     errorToast(err);
   }
 }
@@ -368,7 +369,7 @@ async function openTab(tab, carry) {
       tab = await api('PATCH', `/api/tabs/${tab.id}`, { version: tab.version, lines: [...tab.lines.map(stripName), ...tabLines(carry)] });
       toast(`Apuntado en la cuenta de ${tab.name}.`);
     } catch (err) {
-      if (err instanceof ApiError && ['price_changed', 'out_of_stock'].includes(err.code)) loadCatalog().catch(() => {});
+      if (err instanceof ApiError && err.code === 'price_changed') loadCatalog().catch(() => {});
       return errorToast(err);
     }
   }
@@ -411,10 +412,9 @@ function chooseCombo(p) {
     const price = h('span', { class: 'price-big' });
     const add = h('button', { class: 'btn success big', disabled: true, onclick: () => close({ licor, refresco }) }, 'Añadir a la cuenta');
     const group = (items, pick, isOn) => h('div', { class: 'opt-grid' }, items.map((o) => h('button', {
-      class: 'opt', disabled: o.status === 'agotado', 'data-id': o.id,
+      class: 'opt', 'data-id': o.id,
       onclick: (e) => { pick(o); e.currentTarget.parentElement.querySelectorAll('.opt').forEach((b) => b.classList.toggle('on', isOn(Number(b.dataset.id)))); update(); },
-    }, h('span', { class: 'strong' }, o.label), o.price_cents !== null ? h('span', {}, eur(o.price_cents)) : null,
-      o.status === 'agotado' ? h('span', { class: 'badge badge-out' }, 'AGOTADO') : null)));
+    }, h('span', { class: 'strong' }, o.label), o.price_cents !== null ? h('span', {}, eur(o.price_cents)) : null)));
     function update() {
       clear(summary);
       summary.append(h('div', { class: 'strong big-text' }, `${licor ? licor.label : '¿Licor?'} + ${refresco ? refresco.label : '¿Refresco?'}`));
@@ -456,7 +456,6 @@ async function handleSaleError(err) {
     cartChanged();
     return errorToast(err);
   }
-  if (err.code === 'out_of_stock') { await loadCatalog(); return errorToast(err); }
   if (err.code === 'no_open_shift') return ctxRef.noShift();
   return errorToast(err);
 }
@@ -576,11 +575,11 @@ async function invite() {
   if (!reason) return;
   try {
     await post('/api/sales', saleBody({ kind: 'invitacion', note: reason }));
-    finishSale('Invitación registrada. Se ha descontado del inventario.');
+    finishSale('Invitación registrada.');
   } catch (err) { handleSaleError(err); }
 }
 
-// --- Últimas ventas y anulaciones (admin) -------------------------------------
+// --- Últimas ventas y anulaciones ------------------------------------------------
 
 async function recentSales() {
   let sales;
@@ -610,9 +609,8 @@ async function recentSales() {
       if (!reason) return;
       try {
         await post('/api/voids', { id: uuid4(), sale_id: sale.id, line_id: line ? line.id : null, qty: line ? 1 : null, reason });
-        toast('Anulación registrada. El stock se ha devuelto.');
+        toast('Anulación registrada. El importe se descuenta de la caja.');
         draw(await get('/api/sales/recent?limit=40'));
-        loadCatalog().catch(() => {});
       } catch (err) { errorToast(err); }
     }
     draw(sales);
@@ -623,7 +621,6 @@ async function recentSales() {
 }
 
 async function cashMovement() {
-  if (!(await ctxRef.ensureAdmin())) return;
   st.modalOpen = true;
   const values = await formDialog({
     title: 'Movimiento de caja',

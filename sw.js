@@ -1,6 +1,6 @@
 // Service worker de la app de la tablet: guarda todos los archivos de la app para que
 // funcione sin internet. build.py rellena VERSION y FILES.
-const VERSION = "b820f12d9f06";
+const VERSION = "4594442ec131";
 const FILES = [
 "./",
 "./app-python.zip",
