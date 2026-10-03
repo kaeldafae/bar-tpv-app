@@ -10,7 +10,8 @@ import * as copias from './copias.js';
 // Paquetes de Pyodide que necesita la caja (sus dependencias se cargan solas).
 // pycryptodome: scrypt para la contraseña (el hashlib de Pyodide no lo trae).
 const PACKAGES = ['fastapi', 'pydantic', 'starlette', 'anyio', 'pycryptodome'];
-const DATA = '/data';
+// Nombre único: en kaeldafae.github.io hay otras apps y comparten el almacenamiento del navegador.
+const DATA = '/cpbar-caja';
 
 const bootBox = document.getElementById('boot');
 const bootText = document.getElementById('boot-text');
