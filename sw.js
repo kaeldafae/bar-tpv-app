@@ -1,6 +1,6 @@
 // Service worker de la app de la tablet: guarda todos los archivos de la app para que
 // funcione sin internet. build.py rellena VERSION y FILES.
-const VERSION = "906ab6d925e9";
+const VERSION = "8eb257f2d7cd";
 const FILES = [
 "./",
 "./app-python.zip",
@@ -41,7 +41,11 @@ const FILES = [
 const CACHE = `cpbar-${VERSION}`;
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(FILES)).then(() => self.skipWaiting()));
+  // cache: 'reload' = descargar de verdad, sin usar la caché HTTP del navegador (GitHub Pages
+  // la guarda 10 minutos): si no, una versión nueva podía quedarse con archivos viejos.
+  event.waitUntil(caches.open(CACHE)
+    .then((cache) => cache.addAll(FILES.map((f) => new Request(f, { cache: 'reload' }))))
+    .then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (event) => {

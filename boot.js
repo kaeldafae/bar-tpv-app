@@ -100,7 +100,8 @@ export const caja = {
 
 async function start() {
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').catch((err) => console.warn('Service worker', err));
+    // updateViaCache 'none': el navegador comprueba siempre si hay un sw.js nuevo (versión nueva de la app).
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch((err) => console.warn('Service worker', err));
   }
   // Pide al navegador que no borre los datos de la caja si le falta espacio.
   if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
