@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>CP BAR · Caja</title>
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#15171C">
+<link rel="stylesheet" href="app.css">
+<script type="module" src="boot.js"></script>
+</head>
+<body>
+<div class="layout">
+  <nav class="side" aria-label="Menú principal">
+    <div class="brand">CP BAR</div>
+    <div id="nav" class="nav"></div>
+    <div class="grow"></div>
+    <div id="admin-state"></div>
+    <div id="shift-info" class="shift-info"></div>
+    <div id="clock" class="clock" aria-live="off"></div>
+  </nav>
+  <div class="content">
+    <div id="banners"></div>
+    <main id="main" class="main"></main>
+  </div>
+</div>
+<div id="boot" style="position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:#15171C;color:#F4F1EA;font-family:system-ui,sans-serif;text-align:center;padding:24px">
+  <div style="font-size:42px;font-weight:800;letter-spacing:1px">CP BAR</div>
+  <div style="width:46px;height:46px;border:5px solid #3A3F4B;border-top-color:#F2C14E;border-radius:50%;animation:cpbar-spin 1s linear infinite"></div>
+  <p id="boot-text" style="font-size:20px;max-width:560px;margin:0">Arrancando la caja…</p>
+  <p style="font-size:15px;color:#A9AFBC;margin:0">La primera vez tarda un poco más. Después funciona sin internet.</p>
+  <style>@keyframes cpbar-spin{to{transform:rotate(360deg)}} #boot.boot-error #boot-text{color:#FFB4AB}</style>
+</div>
+<div id="overlays"></div>
+<div id="toasts" class="toasts" aria-live="polite"></div>
+<noscript>Esta aplicación necesita JavaScript.</noscript>
+</body>
+</html>
