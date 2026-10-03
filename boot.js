@@ -98,6 +98,40 @@ export const caja = {
   },
 };
 
+// --- Botón «Instalar CP BAR» ---------------------------------------------------
+// Chrome avisa (beforeinstallprompt) cuando la app se puede instalar como aplicación:
+// entonces aparece un botón; al pulsarlo sale el diálogo de instalación de Android y
+// la caja queda en el cajón de aplicaciones con su icono.
+let installEvent = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  installEvent = e;
+  showInstallButton();
+});
+window.addEventListener('appinstalled', () => {
+  installEvent = null;
+  document.getElementById('install-app')?.remove();
+});
+
+function showInstallButton() {
+  if (document.getElementById('install-app') || !installEvent) return;
+  const btn = document.createElement('button');
+  btn.id = 'install-app';
+  btn.type = 'button';
+  btn.textContent = '⬇ Instalar CP BAR como aplicación';
+  btn.style.cssText = 'position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:90;padding:16px 24px;'
+    + 'font:700 19px system-ui,sans-serif;color:#15171C;background:#F2C14E;border:0;border-radius:14px;'
+    + 'box-shadow:0 6px 24px rgba(0,0,0,.5);cursor:pointer';
+  btn.addEventListener('click', async () => {
+    if (!installEvent) return;
+    installEvent.prompt();
+    await installEvent.userChoice.catch(() => null);
+    installEvent = null;
+    btn.remove();
+  });
+  document.body.append(btn);
+}
+
 async function start() {
   if ('serviceWorker' in navigator) {
     // updateViaCache 'none': el navegador comprueba siempre si hay un sw.js nuevo (versión nueva de la app).

@@ -1,12 +1,16 @@
 // Service worker de la app de la tablet: guarda todos los archivos de la app para que
 // funcione sin internet. build.py rellena VERSION y FILES.
-const VERSION = "8eb257f2d7cd";
+const VERSION = "b820f12d9f06";
 const FILES = [
 "./",
 "./app-python.zip",
 "./app.css",
+"./apple-touch-icon.png",
 "./boot.js",
 "./copias.js",
+"./icon-192.png",
+"./icon-512.png",
+"./icon-maskable-512.png",
 "./icon.svg",
 "./index.html",
 "./js/admin.js",
