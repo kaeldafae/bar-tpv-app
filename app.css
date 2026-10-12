@@ -90,6 +90,7 @@ button:disabled { cursor: not-allowed; }
 .empty { color: var(--muted); padding: 28px 8px; text-align: center; }
 .neg-text { color: var(--danger-text); font-weight: 700; }
 .pos-text { color: var(--success-text); font-weight: 700; }
+.ok-text { color: var(--success-text); }
 .danger-text { color: var(--danger-text) !important; }
 
 /* Estructura */

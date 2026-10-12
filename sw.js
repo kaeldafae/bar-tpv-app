@@ -4,7 +4,7 @@
 // Actualizaciones: una versión nueva se descarga entera en segundo plano y queda
 // «esperando». La página decide cuándo aplicarla (al instante si la caja está libre,
 // o cuando el camarero pulse «Actualizar»), para no reiniciar en mitad de un cobro.
-const VERSION = "d24505e419ae";
+const VERSION = "31cec57fe84b";
 const FILES = [
 "./",
 "./app-python.zip",
@@ -21,6 +21,7 @@ const FILES = [
 "./js/api.js",
 "./js/app.js",
 "./js/close.js",
+"./js/envio.js",
 "./js/reports.js",
 "./js/sell.js",
 "./js/ui.js",

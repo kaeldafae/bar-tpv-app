@@ -2,6 +2,7 @@
 import { get, post, saveOrDownload, download } from './api.js';
 import { h, clear, eur, parseEuros, centsToInput } from './util.js';
 import { toast, errorToast, confirmDialog, setBusy } from './ui.js';
+import * as envio from './envio.js';
 
 const DENOMS = [50000, 20000, 10000, 5000, 2000, 1000, 500, 200, 100, 50, 20, 10, 5, 2, 1];
 const denomLabel = (d) => (d >= 100 ? `${d / 100} €` : `${d} cént.`);
@@ -143,6 +144,7 @@ export async function render(main, ctx) {
         : h('p', { class: 'big-text' }, 'El Excel se está descargando en la carpeta Descargas.'),
       closed.backup ? h('p', { class: 'muted' }, closed.backup.usb.length ? 'Copia de seguridad hecha (también en el pendrive).' : 'Copia de seguridad hecha.') :
         h('p', { class: 'field-error' }, 'No se pudo hacer la copia de seguridad. Revisa Admin → Ajustes.'),
+      envio.closeNotice(closed),
       h('div', { class: 'row' },
         h('button', { class: 'btn ghost big', onclick: dl }, 'Guardar el Excel otra vez'),
         h('button', { class: 'btn success big', onclick: () => location.reload() }, 'Abrir turno nuevo'))));

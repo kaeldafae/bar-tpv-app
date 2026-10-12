@@ -2,6 +2,7 @@
 import { get, post, patch, del, download } from './api.js';
 import { h, clear, eur, parseEuros, centsToInput, fmtDateTime } from './util.js';
 import { modal, toast, errorToast, confirmDialog, askText, formDialog } from './ui.js';
+import * as envio from './envio.js';
 
 // Colores de sección: intensos para que el texto blanco de los botones se lea bien en claro y en oscuro.
 const PALETTE = ['#B45309', '#7C4A1E', '#CA8A04', '#BE185D', '#0369A1', '#6D28D9', '#15803D', '#0F766E', '#B91C1C', '#475569'];
@@ -251,6 +252,7 @@ async function settingsTab(reload) {
       h('p', {}, 'Estás en modo práctica. Cuando tengas tus productos y precios, pulsa aquí para borrar las ventas de prueba y empezar de verdad.'),
       state.shift ? h('p', { class: 'field-error' }, 'Antes cierra el turno de prueba (menú Cerrar turno).') : null,
       h('button', { class: 'btn danger', onclick: startReal, disabled: !!state.shift }, 'Empezar en real')) : null,
+    envio.panel(reload),
     pwa ? pwa.backupPanel(reload) : h('div', { class: 'panel stack' }, h('h2', {}, 'Copias de seguridad'),
       h('p', {}, backups.latest ? `Última copia: ${fmtDateTime(backups.latest)} · ${backups.count} copias guardadas.` : 'Todavía no hay copias.'),
       backups.last_error ? h('p', { class: 'field-error' }, `Último error: ${backups.last_error}`) : null,

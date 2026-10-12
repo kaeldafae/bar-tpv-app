@@ -6,6 +6,7 @@ import * as sell from './sell.js';
 import * as closeShift from './close.js';
 import * as reports from './reports.js';
 import * as adminView from './admin.js';
+import * as envio from './envio.js';
 
 // Solo Admin (productos y precios) pide contraseña.
 const VIEWS = {
@@ -170,6 +171,8 @@ function renderBanners() {
       h('strong', {}, 'La hora del aparato está atrasada. '),
       'Es anterior a la última venta guardada. Corrige la fecha y hora antes de seguir vendiendo.'));
   }
+  const gestion = envio.banner();
+  if (gestion) box.append(gestion);
 }
 
 function tickClock() {
@@ -255,6 +258,7 @@ async function boot() {
       h('button', { class: 'btn primary big', onclick: boot }, 'Reintentar')));
     return;
   }
+  envio.start(); // cierres a Gestión: en segundo plano, también sin turno abierto
   if (!ctx.state.admin_configured) return setupScreen();
   if (!ctx.state.shift) return openShiftScreen();
   return go(ctx.view);
@@ -284,6 +288,7 @@ applyTheme(document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light')
 document.getElementById('theme-btn')?.addEventListener('click', () => {
   applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
 });
+window.addEventListener('cpbar:envio', () => renderBanners());
 tickClock();
 setInterval(tickClock, 10_000);
 setInterval(poll, 30_000);
